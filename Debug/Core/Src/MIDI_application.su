@@ -1,0 +1,3 @@
+../Core/Src/MIDI_application.c:42:6:MIDI_Application	8	static
+../Core/Src/MIDI_application.c:63:6:ProcessReceivedMidiDatas	24	static
+../Core/Src/MIDI_application.c:190:6:USBH_MIDI_ReceiveCallback	16	static

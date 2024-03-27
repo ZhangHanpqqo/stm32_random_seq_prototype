@@ -1,0 +1,13 @@
+../Core/Src/usbh_MIDI.c:78:27:USBH_MIDI_InterfaceInit	48	static
+../Core/Src/usbh_MIDI.c:164:20:USBH_MIDI_InterfaceDeInit	24	static
+../Core/Src/usbh_MIDI.c:200:27:USBH_MIDI_ClassRequest	16	static
+../Core/Src/usbh_MIDI.c:216:21:USBH_MIDI_Stop	24	static
+../Core/Src/usbh_MIDI.c:240:27:USBH_MIDI_Process	24	static
+../Core/Src/usbh_MIDI.c:287:27:USBH_MIDI_SOFProcess	16	static
+../Core/Src/usbh_MIDI.c:299:10:USBH_MIDI_GetLastReceivedDataSize	24	static
+../Core/Src/usbh_MIDI.c:320:21:USBH_MIDI_Transmit	32	static
+../Core/Src/usbh_MIDI.c:347:21:USBH_MIDI_Receive	32	static
+../Core/Src/usbh_MIDI.c:373:13:MIDI_ProcessTransmission	32	static
+../Core/Src/usbh_MIDI.c:460:13:MIDI_ProcessReception	32	static
+../Core/Src/usbh_MIDI.c:526:13:USBH_MIDI_TransmitCallback	16	static
+../Core/Src/usbh_MIDI.c:537:13:USBH_MIDI_ReceiveCallback	16	static

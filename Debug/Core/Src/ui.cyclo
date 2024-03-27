@@ -1,0 +1,2 @@
+../Core/Src/ui.c:22:6:mux_select_pin	3
+../Core/Src/ui.c:35:6:mux_pull_values	1
