@@ -32,11 +32,17 @@ void mux_select_pin(int pin)
 }
 
 
-void mux_pull_values(float *x, float *y, float *fc, float *vari, int i){
+void mux_pull_values(float *x, float *y, float *fc, float *vari, float *randomness, int i){
 
 	mux_select_pin(i);
 	x[i] = ADC_values[6];
 	y[i] = ADC_values[7];
-	fc[i] = i;
-	vari[i] = i;
+//	fc[i] = ADC_values[i];
+//	vari[i] = ADC_values[i + 3];
+
+	fc[0] = ADC_values[0]; fc[1] = ADC_values[1]; fc[2] = ADC_values[2];
+	vari[0] = ADC_values[3]; vari[1] = ADC_values[4]; vari[2] = ADC_values[5];
+
+	randomness = ADC_values[8];
+
 }

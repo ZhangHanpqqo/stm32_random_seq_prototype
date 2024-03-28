@@ -25,6 +25,7 @@ void audioFrame(uint16_t buffer_offset);
 float audioTickL(float audioIn);
 float audioTickR(float audioIn);
 void buttonCheck(void);
+void decideState(void);
 
 HAL_StatusTypeDef transmit_status;
 HAL_StatusTypeDef receive_status;
@@ -66,13 +67,18 @@ tMempool smallPool;
 tMempool largePool;
 
 static float fc[STEPS_MAX], vari[STEPS_MAX], x[STEPS_MAX], y[STEPS_MAX];
+static float randomness = 0.0f;
 uint8_t count_knob = 0;
+uint8_t method;
+static uint8_t state_cur, state_next;
 /**********************************************/
 
 typedef enum BOOL {
 	FALSE = 0,
 	TRUE
 } BOOL;
+
+
 
 
 void audioInit(I2C_HandleTypeDef* hi2c, SAI_HandleTypeDef* hsaiOut, SAI_HandleTypeDef* hsaiIn)
@@ -99,7 +105,7 @@ void audioInit(I2C_HandleTypeDef* hi2c, SAI_HandleTypeDef* hsaiOut, SAI_HandleTy
 	for (int i = 0; i < 6; i++)
 	{
 		tCycle_initToPool(&mySine[i], &smallPool);
-		tCycle_setFreq(&mySine[i], 440.0f);
+		tCycle_setFreq(&mySine[i], 0.0f);
 	}
 
 
@@ -146,25 +152,37 @@ void audioFrame(uint16_t buffer_offset)
 
 	/** read the inputs of the external knobs with multiplex **/
 	if (count_knob < STEPS_MAX){
-		mux_pull_values(&x, &y, &fc, &vari, count_knob);
+		mux_pull_values(&x, &y, &fc, &vari, &randomness, count_knob);
 		count_knob++;
 	}
 	else{
-		mux_pull_values(&x, &y, &fc, &vari, 0);
+		mux_pull_values(&x, &y, &fc, &vari, &randomness, 0);
 		count_knob = 1;
 	}
-	/***/
+	/*>-<*/
+
+	/** decide the next state **/
+//	decideState();
+
+	if(buttonPressed[1] == 1){
+		decideState();
+		state_cur = state_next;
+		buttonPressed[1] = 0;
+	}
+	tRamp_setDest(&adc[0], (fc[state_cur] * INV_TWO_TO_16));
+	/*>-<*/
 
 	//read the analog inputs and smooth them with ramps
 //	for (i = 0; i < 6; i++)
 //	{
 //		tRamp_setDest(&adc[i], (ADC_values[i] * INV_TWO_TO_16));
 //	}
-	for (int j = 0; j < 3; j++)
-	{
-		tRamp_setDest(&adc[j], (x[j] * INV_TWO_TO_16));
-		tRamp_setDest(&adc[j+3], (y[j] * INV_TWO_TO_16));
-	}
+	// test external
+//	for (int j = 0; j < 3; j++)
+//	{
+//		tRamp_setDest(&adc[j], (x[j] * INV_TWO_TO_16));
+//		tRamp_setDest(&adc[j+3], (y[j] * INV_TWO_TO_16));
+//	}
 
 
 	//if the codec isn't ready, keep the buffer as all zeros
@@ -194,11 +212,14 @@ float audioTickL(float audioIn)
 {
 
 	sample = 0.0f;
-	for (int i = 0; i < 6; i = i+2) // even numbered knobs (left side of board)
-	{
-		tCycle_setFreq(&mySine[i], (tRamp_tick(&adc[i]) * 500.0f) + 100.0f); // use knob to set frequency between 100 and 600 Hz
-		sample += tCycle_tick(&mySine[i]); // tick the oscillator
-	}
+//	for (int i = 0; i < 6; i = i+2) // even numbered knobs (left side of board)
+//	{
+//		tCycle_setFreq(&mySine[i], (tRamp_tick(&adc[i]) * 500.0f) + 100.0f); // use knob to set frequency between 100 and 600 Hz
+//		sample += tCycle_tick(&mySine[i]); // tick the oscillator
+//	}
+	tCycle_setFreq(&mySine[0], (tRamp_tick(&adc[0]) * 500.0f) + 100.0f);
+	sample += tCycle_tick(&mySine[0]);
+
 	sample *= 0.33f; // drop the gain because we've got three full volume sine waves summing here
 
 	return sample;
@@ -215,11 +236,13 @@ float audioTickR(float audioIn)
 
 
 
-	for (int i = 0; i < 6; i = i+2) // odd numbered knobs (right side of board)
-	{
-		tCycle_setFreq(&mySine[i+1], (tRamp_tick(&adc[i+1]) * 500.0f) + 100.0f); // use knob to set frequency between 100 and 600 Hz
-		sample += tCycle_tick(&mySine[i+1]); // tick the oscillator
-	}
+//	for (int i = 0; i < 6; i = i+2) // odd numbered knobs (right side of board)
+//	{
+//		tCycle_setFreq(&mySine[i+1], (tRamp_tick(&adc[i+1]) * 500.0f) + 100.0f); // use knob to set frequency between 100 and 600 Hz
+//		sample += tCycle_tick(&mySine[i+1]); // tick the oscillator
+//	}
+	tCycle_setFreq(&mySine[0], (tRamp_tick(&adc[0]) * 500.0f) + 100.0f);
+	sample += tCycle_tick(&mySine[0]);
 	sample *= 0.33f; // drop the gain because we've got three full volume sine waves summing here
 
 
@@ -254,8 +277,6 @@ void buttonCheck(void)
 
 	if (buttonPressed[0] == 1)
 	{
-
-		/*
 		if (LED_States[0] == 0)
 		{
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
@@ -267,8 +288,8 @@ void buttonCheck(void)
 			LED_States[0] = 0;
 		}
 		buttonPressed[0] = 0;
-		*/
 	}
+
 	if (buttonPressed[1] == 1)
 	{
 		if (LED_States[1] == 0)
@@ -281,7 +302,7 @@ void buttonCheck(void)
 			HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_RESET);
 			LED_States[1] = 0;
 		}
-		buttonPressed[1] = 0;
+//		buttonPressed[1] = 0;
 	}
 
 	if (buttonPressed[2] == 1)
@@ -297,6 +318,36 @@ void buttonCheck(void)
 			LED_States[2] = 0;
 		}
 		buttonPressed[2] = 0;
+	}
+}
+
+
+void decideState(){
+	method = LED_States[0];
+	float prob[STEPS_MAX], prob_accum[STEPS_MAX];
+
+	if((method & 1) == 0){ //method: distance
+		for(int i=0; i < STEPS_MAX; i++){
+			prob[i] = sqrt((x[i]-x[state_cur]) * INV_TWO_TO_16 * (x[i]-x[state_cur]) * INV_TWO_TO_16 + (y[i]-y[state_cur]) * INV_TWO_TO_16 * (y[i]-y[state_cur]) * INV_TWO_TO_16);
+			if(i == 0) {prob_accum[i] = prob[i];}
+			else{prob_accum[i] = prob_accum[i - 1] + prob[i];}
+		}
+	}
+	else{ // method: y
+		for(int i=0; i < STEPS_MAX; i++){
+			prob[i] = y[i] * INV_TWO_TO_16;
+			if(i == 0) {prob_accum[i] = prob[i];}
+			else{prob_accum[i] = prob_accum[i - 1] + prob[i];}
+		}
+	}
+
+	float numrand = randomNumber() * prob_accum[STEPS_MAX - 1];
+
+	for(int i=0; i < STEPS_MAX; i++){
+		if(prob_accum[i] > numrand){
+			state_next = i;
+			break;
+		}
 	}
 }
 

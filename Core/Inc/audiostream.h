@@ -70,6 +70,7 @@ void audioFrame(uint16_t buffer_offset);
 
 void DMA1_TransferCpltCallback(DMA_HandleTypeDef *hdma);
 void DMA1_HalfTransferCpltCallback(DMA_HandleTypeDef *hdma);
+
 #endif /* __AUDIOSTREAM_H */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
