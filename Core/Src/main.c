@@ -144,7 +144,7 @@ int main(void)
 	{
 	  Error_Handler();
 	}
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+//  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
   HAL_Delay(10);
 
   SDRAM_Initialization_sequence();

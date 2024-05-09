@@ -37,6 +37,10 @@
 #define HALF_BUFFER_SIZE      AUDIO_FRAME_SIZE * 2 //number of samples per half of the "double-buffer" (twice the audio frame size because there are interleaved samples for both left and right channels)
 #define AUDIO_BUFFER_SIZE     AUDIO_FRAME_SIZE * 4 //number of samples in the whole data structure (four times the audio frame size because of stereo and also double-buffering/ping-ponging)
 
+#define NUM_BUTTONS 3
+#define STEPS_MAX 8 // max step number, will increase
+#define NUM_HALLS 16
+
 
 extern int32_t audioOutBuffer[AUDIO_BUFFER_SIZE];
 extern uint8_t codecReady;
@@ -61,6 +65,8 @@ typedef enum
 #define SAMPLE_RATE_DIV_PARAMS SAMPLE_RATE / 3
 #define SAMPLE_RATE_DIV_PARAMS_MS (SAMPLE_RATE_DIV_PARAMS / 1000.f)
 #define INV_SR_DIV_PARAMS_MS 1.f/SAMPLE_RATE_DIV_PARAMS_MS
+
+#define MAX_DELAY SAMPLE_RATE*5
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
