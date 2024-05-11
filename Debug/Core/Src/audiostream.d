@@ -68,6 +68,7 @@ Core/Src/audiostream.o: ../Core/Src/audiostream.c \
  /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-oscillators.h \
  /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-filters.h \
  /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-delay.h \
+ /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-delay-ext.h \
  /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-reverb.h \
  /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-oscillators.h \
  /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-effects.h \
@@ -151,6 +152,7 @@ Core/Src/audiostream.o: ../Core/Src/audiostream.c \
 /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-oscillators.h:
 /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-filters.h:
 /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-delay.h:
+/Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-delay-ext.h:
 /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-reverb.h:
 /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-oscillators.h:
 /Users/hanzhang/STM32CubeIDE/workspace_1.14.0/genera_brain_templt_re/Core/LEAF/leaf/./Inc/leaf-effects.h:

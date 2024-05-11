@@ -19,6 +19,7 @@ Core/LEAF/leaf/Src/leaf.o: ../Core/LEAF/leaf/Src/leaf.c \
  ../Core/LEAF/leaf/Src/.././Inc/leaf-oscillators.h \
  ../Core/LEAF/leaf/Src/.././Inc/leaf-filters.h \
  ../Core/LEAF/leaf/Src/.././Inc/leaf-delay.h \
+ ../Core/LEAF/leaf/Src/.././Inc/leaf-delay-ext.h \
  ../Core/LEAF/leaf/Src/.././Inc/leaf-reverb.h \
  ../Core/LEAF/leaf/Src/.././Inc/leaf-oscillators.h \
  ../Core/LEAF/leaf/Src/.././Inc/leaf-effects.h \
@@ -51,6 +52,7 @@ Core/LEAF/leaf/Src/leaf.o: ../Core/LEAF/leaf/Src/leaf.c \
 ../Core/LEAF/leaf/Src/.././Inc/leaf-oscillators.h:
 ../Core/LEAF/leaf/Src/.././Inc/leaf-filters.h:
 ../Core/LEAF/leaf/Src/.././Inc/leaf-delay.h:
+../Core/LEAF/leaf/Src/.././Inc/leaf-delay-ext.h:
 ../Core/LEAF/leaf/Src/.././Inc/leaf-reverb.h:
 ../Core/LEAF/leaf/Src/.././Inc/leaf-oscillators.h:
 ../Core/LEAF/leaf/Src/.././Inc/leaf-effects.h:

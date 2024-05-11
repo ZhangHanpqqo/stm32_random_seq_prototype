@@ -48,7 +48,8 @@ uint16_t frameCounter = 0;
 tRamp adc[6];
 tNoise noise;
 tCycle mySine[6];
-tDelay del[2];
+//tDelay del[2];
+tTapeDelay delT[2];
 
 //audio objects for external
 tRamp adc_extern[STEPS_MAX * 2];
@@ -119,7 +120,8 @@ void audioInit(I2C_HandleTypeDef* hi2c, SAI_HandleTypeDef* hsaiOut, SAI_HandleTy
 
 	for(int i = 0; i < 2; i++)
 	{
-		tDelay_initToPool(&del[i], SAMPLE_RATE, MAX_DELAY, &largePool);
+//		tDelay_initToPool(&del[i], SAMPLE_RATE, MAX_DELAY, &largePool);
+		tTapeDelay_initToPool(&delT[i], SAMPLE_RATE, MAX_DELAY, &largePool);
 	}
 
 
@@ -235,9 +237,9 @@ void audioFrame(uint16_t buffer_offset)
 				current_sample = (int32_t)(audioTickL((float) ((audioInBuffer[buffer_offset + i] << 8) * INV_TWO_TO_31)) * TWO_TO_23);
 			}
 
-//			if (LED_States[2] == 1){		//mute
-//				current_sample *= 0;
-//			}
+			if (LED_States[2] == 1){		//mute
+				current_sample *= 0;
+			}
 
 			audioOutBuffer[buffer_offset + i] = current_sample;
 
@@ -246,12 +248,12 @@ void audioFrame(uint16_t buffer_offset)
 }
 
 
-float sampleL = 0.0f, y1L = 0.0f, y2L = 0.0f, y3L = 0.0f, y4L = 0.0f, y1lastL = 0.0f, y2lastL = 0.0f, y3lastL = 0.0f, x1L = 0.0f, x2L = 0.0f;
-float sampleR = 0.0f, y1R = 0.0f, y2R = 0.0f, y3R = 0.0f, y4R = 0.0f, y1lastR = 0.0f, y2lastR = 0.0f, y3lastR = 0.0f, x1R = 0.0f, x2R = 0.0f;
+float sampleL = 0.0f, y0L = 0.0f, y1L = 0.0f, y2L = 0.0f, y3L = 0.0f, y4L = 0.0f, y1lastL = 0.0f, y2lastL = 0.0f, y3lastL = 0.0f, x1L = 0.0f, x2L = 0.0f;
+float sampleR = 0.0f, y0R = 0.0f, y1R = 0.0f, y2R = 0.0f, y3R = 0.0f, y4R = 0.0f, y1lastR = 0.0f, y2lastR = 0.0f, y3lastR = 0.0f, x1R = 0.0f, x2R = 0.0f;
 float filter_fc = 0.0f, filter_k = 0.0f, filter_p = 0.0f, filter_res = 0.0f, filter_r = 0.0f, filter_c = 0.0f;
 float filter_4p_para1 = 7.2f, filter_4p_para2 = 6.4f, filter_4p_para3 = 1.386249;
 float del_mix = 0.5f, del_fb = 1.0f;
-int del_len = SAMPLE_RATE;
+int del_lenX = SAMPLE_RATE, del_lenY = SAMPLE_RATE;
 float a0 = 0.0f, a1 = 0.0f, a2 = 0.0f, b1 = 0.0f, b2 = 0.0f;
 
 float audioTickL(float audioIn)
@@ -270,7 +272,7 @@ float audioTickL(float audioIn)
 	/*>-<*/
 
 	/* four pole cascade, moog vcf(need caliboration with input values) */
-//	filter_fc = tRamp_tick(&adc[0]) * 1550.0f + 50.0f;
+//	filter_fc = tRamp_tick(&adc[0]) * 4950.0f + 50.0f;
 //	filter_res = tRamp_tick(&adc[1]);
 //	filter_4p_para1 = tRamp_tick(&adc[3]) * 20.0f;
 //	filter_4p_para2 = tRamp_tick(&adc[4]) * 15.0f;
@@ -312,36 +314,50 @@ float audioTickL(float audioIn)
 	/*>-<*/
 
 	/* delay */
+	/* simple delay */
 	filter_fc = tRamp_tick(&adc[0]) * 1550.0f + 50.0f;
 	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
 	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
-	del_mix = 1 - tRamp_tick(&adc[1]);
-	del_len = (int)(pow(SAMPLE_RATE, (2 * tRamp_tick(&adc[2]) - 1)) + 1);
+	del_mix = 1.0f - tRamp_tick(&adc[1]);
+	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 3)) + 1);
+	del_lenY = LED_States[0] == 1 ? del_lenX : (int)(pow(8, (9 * tRamp_tick(&adc[5]) - 3)) + 1);
+//	del_len = tRamp_tick(&adc[2]) * SAMPLE_RATE * 3;
 	del_fb = tRamp_tick(&adc[3]);
 
 	a0 = del_mix + (1 - del_mix) * filter_c;
 	a1 = 1 - del_mix;
 	b1 = filter_c * del_fb * (1 - del_mix);
 
-	// Delay tick
-	// // input x
-	del[0]->delay = del_len;
-	del[1]->delay = del_len;
+	/* simple delay */
+//	// Delay tick
+//	// // input x
+//	tDelay_setDelay(&del[0], del_len);
+//	tDelay_setDelay(&del[1], del_len);
+//
+//	del[0]->lastIn = audioIn;
+//	del[0]->buff[del[0]->inPoint] = audioIn * del[0]->gain;
+//	if (++(del[0]->inPoint) == del[0]->maxDelay)     del[0]->inPoint = 0;
+//
+//	// // output x
+//	del[0]->lastOut = del[0]->buff[del[0]->outPoint];
+//	if (++(del[0]->outPoint) == del[0]->maxDelay)    del[0]->outPoint = 0;
+//
+//	sampleL = del[1]->lastOut = a0 * audioIn + a1 * del[0]->lastOut - b1 * del[1]->lastOut;
+//	del[1]->buff[del[1]->inPoint] = sampleL;
+//	if (++(del[1]->inPoint) == del[1]->maxDelay)     del[1]->inPoint = 0;
+//
+//	del[1]->lastOut = del[1]->buff[del[1]->outPoint];
+//	if (++(del[1]->outPoint) == del[1]->maxDelay)    del[1]->outPoint = 0;
+	/*>-<*/
 
-	del[0]->lastIn = audioIn;
-	del[0]->buff[del[0]->inPoint] = audioIn * del[0]->gain;
-	if (++(del[0]->inPoint) == del[0]->maxDelay)     del[0]->inPoint = 0;
+	/* tape delay */
+	tTapeDelay_setDelay(&delT[0], del_lenX);
+	tTapeDelay_setDelay(&delT[1], del_lenY-1);
 
-	// // output x
-	del[0]->lastOut = del[0]->buff[del[0]->outPoint];
-	if (++(del[0]->outPoint) == del[0]->maxDelay)    del[0]->outPoint = 0;
+	x1L = tTapeDelay_tick(&delT[0], audioIn);
+	sampleL = a0 * audioIn + a1 * x1L - b1 * y1L;
+	y1L = tTapeDelay_tick(&delT[1], sampleL);
 
-	sampleL = del[1]->lastOut = a0 * audioIn + a1 * del[0]->lastOut - b1 * del[1]->lastOut;
-	del[1]->buff[del[1]->inPoint] = sampleL;
-	if (++(del[1]->inPoint) == del[1]->maxDelay)     del[1]->inPoint = 0;
-
-	del[1]->lastOut = del[1]->buff[del[1]->outPoint];
-	if (++(del[1]->outPoint) == del[1]->maxDelay)    del[1]->outPoint = 0;
 	/*>-<*/
 
 	return sampleL;
