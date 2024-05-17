@@ -395,7 +395,7 @@ float audioTickL(float audioIn)
 //	for(int i = 0; i < num_delX; i++) sampleL += delE->lastOuts[i] / num_delX;
 //
 //	return sampleL;
-//}
+}
 
 
 uint32_t myCounter = 0;
