@@ -42,6 +42,7 @@
 #define NUM_HALLS 16
 
 
+
 extern int32_t audioOutBuffer[AUDIO_BUFFER_SIZE];
 extern uint8_t codecReady;
 
