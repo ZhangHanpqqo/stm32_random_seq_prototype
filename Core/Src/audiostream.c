@@ -48,8 +48,8 @@ uint16_t frameCounter = 0;
 tRamp adc[6];
 tNoise noise;
 tCycle mySine[6];
-//tDelay del[2];
 tTapeDelay delT[2];
+tDelayExt delE;
 
 //audio objects for external
 tRamp adc_extern[STEPS_MAX * 2];
@@ -100,6 +100,7 @@ void audioInit(I2C_HandleTypeDef* hi2c, SAI_HandleTypeDef* hsaiOut, SAI_HandleTy
 	tMempool_init (&smallPool, smallMemory, SMALL_MEM_SIZE, &leaf);
 	tMempool_init (&largePool, largeMemory, LARGE_MEM_SIZE, &leaf);
 
+
 	for (int i = 0; i < 6; i++)
 	{
 		tRamp_initToPool(&adc[i],7.0f, 1, &smallPool); //set all ramps for knobs to be 7ms ramp time and let the init function know they will be ticked every sample
@@ -118,11 +119,14 @@ void audioInit(I2C_HandleTypeDef* hi2c, SAI_HandleTypeDef* hsaiOut, SAI_HandleTy
 		tCycle_setFreq(&mySine[i], 440.0f);
 	}
 
-	for(int i = 0; i < 2; i++)
-	{
-//		tDelay_initToPool(&del[i], SAMPLE_RATE, MAX_DELAY, &largePool);
-		tTapeDelay_initToPool(&delT[i], SAMPLE_RATE, MAX_DELAY, &largePool);
-	}
+//	for(int i = 0; i < 2; i++)
+//	{
+//		tTapeDelay_initToPool(&delT[i], SAMPLE_RATE, MAX_DELAY, &largePool);
+//	}
+	uint32_t* temp = (uint32_t *) malloc(sizeof(uint32_t) );
+	*temp = SAMPLE_RATE;
+	tDelayExt_initToPool(&delE, temp, MAX_DELAY, 1, &largePool);
+	free(temp);
 
 
 	HAL_Delay(10);
@@ -172,40 +176,39 @@ void audioFrame(uint16_t buffer_offset)
 	}
 
 	/** read the inputs of the external knobs with multiplex **/
-	if (count_knob < STEPS_MAX - 1){
-		mux_pull_values(&randomness, &halls, &fc, &vari, count_knob);
-		count_knob++;
-	}
-	else{
-		mux_pull_values(&randomness, &halls, &fc, &vari, 7);
-		count_knob = 0;
-	}
+//	if (count_knob < STEPS_MAX - 1){
+//		mux_pull_values(&randomness, &halls, &fc, &vari, count_knob);
+//		count_knob++;
+//	}
+//	else{
+//		mux_pull_values(&randomness, &halls, &fc, &vari, 7);
+//		count_knob = 0;
+//	}
 	/*>-<*/
 
 
 	/** check if button[2] is held for hall calibration **/
-	if(buttonHeld[0] == 1){
-		for(int j = 0; j < NUM_HALLS; j++){
-			halls_cali[j] = halls_cali[j] * ((float)halls_cali_count / (float)(halls_cali_count+1)) + halls[j] / (halls_cali_count+1);
-		}
-		halls_cali_count++;
-		halls_cali_done = 2; // 0: cali never happened, 1: cali done, 2: cali in progress
-	}
-	else {
-		halls_cali_count = 0;
-		if(halls_cali_done == 2){
-			halls_cali_done = 1;
-		}
-	}
+//	if(buttonHeld[0] == 1){
+//		for(int j = 0; j < NUM_HALLS; j++){
+//			halls_cali[j] = halls_cali[j] * ((float)halls_cali_count / (float)(halls_cali_count+1)) + halls[j] / (halls_cali_count+1);
+//		}
+//		halls_cali_count++;
+//		halls_cali_done = 2; // 0: cali never happened, 1: cali done, 2: cali in progress
+//	}
+//	else {
+//		halls_cali_count = 0;
+//		if(halls_cali_done == 2){
+//			halls_cali_done = 1;
+//		}
+//	}
 	/*>-<*/
 
 	/** find xs and ys **/
-	if (halls_cali_done){
-		for (int j = 0; j < NUM_HALLS; j++){
-			halls_shift[j] = halls[j] - halls_cali[j];
-		}
-//		i = 0;
-	}
+//	if (halls_cali_done){
+//		for (int j = 0; j < NUM_HALLS; j++){
+//			halls_shift[j] = halls[j] - halls_cali[j];
+//		}
+//	}
 
 	/*>-<*/
 
@@ -230,11 +233,11 @@ void audioFrame(uint16_t buffer_offset)
 
 			if ((i & 1) == 0)
 			{
-				current_sample = (int32_t)(audioTickR((float) ((audioInBuffer[buffer_offset + i] << 8) * INV_TWO_TO_31)) * TWO_TO_23);
+				current_sample = (int32_t)(audioTickR(((float) (audioInBuffer[buffer_offset + i] << 8)) * INV_TWO_TO_31) * TWO_TO_23);
 			}
 			else
 			{
-				current_sample = (int32_t)(audioTickL((float) ((audioInBuffer[buffer_offset + i] << 8) * INV_TWO_TO_31)) * TWO_TO_23);
+				current_sample = (int32_t)(audioTickL(((float) (audioInBuffer[buffer_offset + i] << 8)) * INV_TWO_TO_31) * TWO_TO_23);
 			}
 
 			if (LED_States[2] == 1){		//mute
@@ -252,8 +255,11 @@ float sampleL = 0.0f, y0L = 0.0f, y1L = 0.0f, y2L = 0.0f, y3L = 0.0f, y4L = 0.0f
 float sampleR = 0.0f, y0R = 0.0f, y1R = 0.0f, y2R = 0.0f, y3R = 0.0f, y4R = 0.0f, y1lastR = 0.0f, y2lastR = 0.0f, y3lastR = 0.0f, x1R = 0.0f, x2R = 0.0f;
 float filter_fc = 0.0f, filter_k = 0.0f, filter_p = 0.0f, filter_res = 0.0f, filter_r = 0.0f, filter_c = 0.0f;
 float filter_4p_para1 = 7.2f, filter_4p_para2 = 6.4f, filter_4p_para3 = 1.386249;
+
 float del_mix = 0.5f, del_fb = 1.0f;
 int del_lenX = SAMPLE_RATE, del_lenY = SAMPLE_RATE;
+int num_delX = 4, num_delY = 4;
+//int* delaysX, delaysY;
 float a0 = 0.0f, a1 = 0.0f, a2 = 0.0f, b1 = 0.0f, b2 = 0.0f;
 
 float audioTickL(float audioIn)
@@ -315,24 +321,24 @@ float audioTickL(float audioIn)
 
 	/* delay */
 	/* simple delay */
-	filter_fc = tRamp_tick(&adc[0]) * 1550.0f + 50.0f;
-	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
-	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
-	del_mix = 1.0f - tRamp_tick(&adc[1]);
-	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 3)) + 1);
-	del_lenY = LED_States[0] == 1 ? del_lenX : (int)(pow(8, (9 * tRamp_tick(&adc[5]) - 3)) + 1);
-//	del_len = tRamp_tick(&adc[2]) * SAMPLE_RATE * 3;
-	del_fb = tRamp_tick(&adc[3]);
-
-	a0 = del_mix + (1 - del_mix) * filter_c;
-	a1 = 1 - del_mix;
-	b1 = filter_c * del_fb * (1 - del_mix);
+//	filter_fc = tRamp_tick(&adc[0]) * 4950.0f + 50.0f;
+//	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
+//	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
+//	del_mix = 1.0f - tRamp_tick(&adc[1]);
+//	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 3)) + 1);
+//	del_lenY = LED_States[0] == 1 ? del_lenX : (int)(pow(8, (9 * tRamp_tick(&adc[5]) - 3)) + 1);
+////	del_len = tRamp_tick(&adc[2]) * SAMPLE_RATE * 3;
+//	del_fb = tRamp_tick(&adc[3]);
+//
+//	a0 = del_mix + (1 - del_mix) * filter_c;
+//	a1 = 1 - del_mix;
+//	b1 = filter_c  * (1 - del_mix) * del_fb;
 
 	/* simple delay */
 //	// Delay tick
 //	// // input x
-//	tDelay_setDelay(&del[0], del_len);
-//	tDelay_setDelay(&del[1], del_len);
+//	tDelay_setDelay(&del[0], del_lenX);
+//	tDelay_setDelay(&del[1], del_lenY);
 //
 //	del[0]->lastIn = audioIn;
 //	del[0]->buff[del[0]->inPoint] = audioIn * del[0]->gain;
@@ -351,6 +357,19 @@ float audioTickL(float audioIn)
 	/*>-<*/
 
 	/* tape delay */
+	filter_fc = tRamp_tick(&adc[0]) * 4950.0f + 50.0f;
+	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
+	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
+	del_mix = 1.0f - tRamp_tick(&adc[1]);
+	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 3)) + 1);
+	del_lenY = LED_States[0] == 1 ? del_lenX : (int)(pow(8, (9 * tRamp_tick(&adc[5]) - 3)) + 1);
+//	del_len = tRamp_tick(&adc[2]) * SAMPLE_RATE * 3;
+	del_fb = tRamp_tick(&adc[3]);
+
+	a0 = del_mix + (1 - del_mix) * filter_c;
+	a1 = 1 - del_mix;
+	b1 = filter_c  * (1 - del_mix) * del_fb;
+
 	tTapeDelay_setDelay(&delT[0], del_lenX);
 	tTapeDelay_setDelay(&delT[1], del_lenY-1);
 
@@ -360,8 +379,23 @@ float audioTickL(float audioIn)
 
 	/*>-<*/
 
-	return sampleL;
-}
+	/* multi delay */
+//	if (num_delX != delE->numPoint)
+//	{
+//		tDelayExt_setNumPoint(&delE, num_delX);
+//	}
+//
+//	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 3)) + 1);
+//	uint32_t delaysX[num_delX];
+//	for(int i = 0; i < num_delX; i++) delaysX[i] = (uint32_t)(i+1) * del_lenX;
+//	tDelayExt_setDelay(&delE, &delaysX[0]);
+//
+//	tDelayExt_tick(&delE, audioIn);
+//	sampleL = 0.0f;
+//	for(int i = 0; i < num_delX; i++) sampleL += delE->lastOuts[i] / num_delX;
+//
+//	return sampleL;
+//}
 
 
 uint32_t myCounter = 0;
