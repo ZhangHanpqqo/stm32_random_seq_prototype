@@ -2,5 +2,11 @@
 ../Core/LEAF/leaf/Src/leaf-delay-ext.c:47:6:tDelayExt_free	1
 ../Core/LEAF/leaf/Src/leaf-delay-ext.c:55:6:tDelayExt_clear	2
 ../Core/LEAF/leaf/Src/leaf-delay-ext.c:61:6:tDelayExt_tick	2
-../Core/LEAF/leaf/Src/leaf-delay-ext.c:72:6:tDelayExt_setDelay	2
-../Core/LEAF/leaf/Src/leaf-delay-ext.c:81:6:tDelayExt_setNumPoint	1
+../Core/LEAF/leaf/Src/leaf-delay-ext.c:73:6:tDelayExt_setDelay	2
+../Core/LEAF/leaf/Src/leaf-delay-ext.c:82:6:tDelayExt_setNumPoint	1
+../Core/LEAF/leaf/Src/leaf-delay-ext.c:110:6:tTapeDelayExt_initToPool	2
+../Core/LEAF/leaf/Src/leaf-delay-ext.c:127:6:tTapeDelayExt_free	1
+../Core/LEAF/leaf/Src/leaf-delay-ext.c:135:6:tTapeDelayExt_clear	2
+../Core/LEAF/leaf/Src/leaf-delay-ext.c:141:6:tTapeDelayExt_tick	2
+../Core/LEAF/leaf/Src/leaf-delay-ext.c:153:6:tTapeDelayExt_setDelay	2
+../Core/LEAF/leaf/Src/leaf-delay-ext.c:162:6:tTapeDelayExt_setNumPoint	1

@@ -75,6 +75,11 @@ void audioInit(I2C_HandleTypeDef* hi2c, SAI_HandleTypeDef* hsaiOut, SAI_HandleTy
 
 void audioFrame(uint16_t buffer_offset);
 
+/* audio loop methods*/
+void moog_filter(float audioIn, float* sample);
+void first_allpass_filter(float audioIn, float* sample);
+void delter_tape(float audioIn, float* sample);
+
 void DMA1_TransferCpltCallback(DMA_HandleTypeDef *hdma);
 void DMA1_HalfTransferCpltCallback(DMA_HandleTypeDef *hdma);
 

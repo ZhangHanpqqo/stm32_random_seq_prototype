@@ -50,7 +50,7 @@ void tDelayExt_setNumPoint(tDelayExt* const, int numPoint);
 
 typedef struct _tTapeDelayExt
 {
-	_tTapeDelay tdelay;
+	tTapeDelay tdelay;
 	uint32_t numPoint;
 	uint32_t* delays;
 	Lfloat* lastOuts;
@@ -58,11 +58,12 @@ typedef struct _tTapeDelayExt
 
 typedef _tTapeDelayExt* tTapeDelayExt;
 
-void tTapeDelayExt_initToPool (tTapeDelayExt* const, uint32_t delay, uint32_t maxDelay, uint32_t numPoint, tMempool* const);
+void tTapeDelayExt_initToPool (tTapeDelayExt* const, uint32_t* delays, uint32_t maxDelay, uint32_t numPoint, tMempool* const);
 void tTapeDelayExt_free (tTapeDelayExt* const);
 void tTapeDelayExt_clear (tTapeDelayExt* const);
 void tTapeDelayExt_tick(tTapeDelayExt* const, Lfloat input);
-void tTapeDelayExt_setDelay(tTapeDelay* const, uint32_t* delays);
+void tTapeDelayExt_setDelay(tTapeDelayExt* const, uint32_t* delays);
+void tTapeDelayExt_setNumPoint(tTapeDelayExt* const, int numPoint);
 
 
 #ifdef __cplusplus

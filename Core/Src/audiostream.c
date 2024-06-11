@@ -48,8 +48,9 @@ uint16_t frameCounter = 0;
 tRamp adc[6];
 tNoise noise;
 tCycle mySine[6];
-tTapeDelay delT[2];
-tDelayExt delE;
+//tTapeDelay delT[2];
+//tDelayExt delE;
+tTapeDelayExt delTE;
 
 //audio objects for external
 tRamp adc_extern[STEPS_MAX * 2];
@@ -125,7 +126,8 @@ void audioInit(I2C_HandleTypeDef* hi2c, SAI_HandleTypeDef* hsaiOut, SAI_HandleTy
 //	}
 	uint32_t* temp = (uint32_t *) malloc(sizeof(uint32_t) );
 	*temp = SAMPLE_RATE;
-	tDelayExt_initToPool(&delE, temp, MAX_DELAY, 1, &largePool);
+//	tDelayExt_initToPool(&delE, temp, MAX_DELAY, 1, &largePool);
+	tTapeDelayExt_initToPool(&delTE, temp, MAX_DELAY, 1, &largePool);
 	free(temp);
 
 
@@ -277,50 +279,25 @@ float audioTickL(float audioIn)
 //	sampleL *= 0.33f; // drop the gain because we've got three full volume sine waves summing here
 	/*>-<*/
 
-	/* four pole cascade, moog vcf(need caliboration with input values) */
-//	filter_fc = tRamp_tick(&adc[0]) * 4950.0f + 50.0f;
-//	filter_res = tRamp_tick(&adc[1]);
-//	filter_4p_para1 = tRamp_tick(&adc[3]) * 20.0f;
-//	filter_4p_para2 = tRamp_tick(&adc[4]) * 15.0f;
-//	filter_4p_para3 = tRamp_tick(&adc[5]) * 5.0f;
-//
-//	filter_k = 7.2f * filter_fc * INV_SAMPLE_RATE - 6.4f * filter_fc * filter_fc * INV_SAMPLE_RATE * INV_SAMPLE_RATE - 1.0f;
-////	filter_k = filter_4p_para1 * filter_fc / SAMPLE_RATE - filter_4p_para2 * filter_fc * filter_fc / SAMPLE_RATE / SAMPLE_RATE - 1.0f;
-//	filter_p = (filter_k + 1.0f) * 0.5f;
-//	filter_r = filter_res * exp((1.0f - filter_p) * 1.386249);
-////	filter_r = filter_res * exp((1.0f - filter_p) * filter_4p_para3);
-//
-//	sampleL = audioIn - filter_r * y4L;
-//	y1L = sampleL * filter_p + x1L * filter_p - filter_k * y1L;
-//	y2L = y1L * filter_p + y1lastL * filter_p - filter_k * y2L;
-//	y3L = y2L * filter_p + y2lastL * filter_p - filter_k * y3L;
-//	y4L = y3L * filter_p + y3lastL * filter_p - filter_k * y4L;
-//	y4L = y4L - y4L * y4L * y4L / 6;
-//
-//	x1L = sampleL;
-//	y1lastL = y1L;
-//	y2lastL = y2L;
-//	y3lastL = y3L;
-//	sampleL = y4L;
-
-//	sampleL = abs(sampleL) > 1 ? (sampleL)/abs(sampleL)+1.0f : sampleL;
-//	sampleL += 1.0f;
-	/*>-<*/
-
-	/* allpass lowpass */
-//	filter_fc = tRamp_tick(&adc[0]) * 1550.0f + 50.0f;
-//	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
-//	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
-//
-//	sampleL = filter_c * audioIn + x1L - filter_c * y1L;
-//	y1L = sampleL;
-//	x1L = audioIn;
-//
-//	sampleL += audioIn;
+	/* simple filters*/
+//	moog_filter(audioIn, &sampleL);
+//	first_allpass_filter(audioIn, &sampleL);
 	/*>-<*/
 
 	/* delay */
-	/* simple delay */
+	/* tape delter */
+//	filter_fc = tRamp_tick(&adc[0]) * 4950.0f + 50.0f;
+//	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
+//	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
+//	del_mix = 1.0f - tRamp_tick(&adc[1]);
+//	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 3)) + 1);
+//	del_lenY = LED_States[0] == 1 ? del_lenX : (int)(pow(8, (9 * tRamp_tick(&adc[5]) - 3)) + 1);
+//	del_fb = tRamp_tick(&adc[3]);
+//
+//	a0 = del_mix + (1 - del_mix) * filter_c;
+//	a1 = 1 - del_mix;
+//	b1 = filter_c  * (1 - del_mix) * del_fb;
+//
 //	filter_fc = tRamp_tick(&adc[0]) * 4950.0f + 50.0f;
 //	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
 //	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
@@ -333,59 +310,24 @@ float audioTickL(float audioIn)
 //	a0 = del_mix + (1 - del_mix) * filter_c;
 //	a1 = 1 - del_mix;
 //	b1 = filter_c  * (1 - del_mix) * del_fb;
-
-	/* simple delay */
-//	// Delay tick
-//	// // input x
-//	tDelay_setDelay(&del[0], del_lenX);
-//	tDelay_setDelay(&del[1], del_lenY);
 //
-//	del[0]->lastIn = audioIn;
-//	del[0]->buff[del[0]->inPoint] = audioIn * del[0]->gain;
-//	if (++(del[0]->inPoint) == del[0]->maxDelay)     del[0]->inPoint = 0;
+//	tTapeDelay_setDelay(&delT[0], del_lenX);
+//	tTapeDelay_setDelay(&delT[1], del_lenY-1);
 //
-//	// // output x
-//	del[0]->lastOut = del[0]->buff[del[0]->outPoint];
-//	if (++(del[0]->outPoint) == del[0]->maxDelay)    del[0]->outPoint = 0;
-//
-//	sampleL = del[1]->lastOut = a0 * audioIn + a1 * del[0]->lastOut - b1 * del[1]->lastOut;
-//	del[1]->buff[del[1]->inPoint] = sampleL;
-//	if (++(del[1]->inPoint) == del[1]->maxDelay)     del[1]->inPoint = 0;
-//
-//	del[1]->lastOut = del[1]->buff[del[1]->outPoint];
-//	if (++(del[1]->outPoint) == del[1]->maxDelay)    del[1]->outPoint = 0;
-	/*>-<*/
-
-	/* tape delay */
-	filter_fc = tRamp_tick(&adc[0]) * 4950.0f + 50.0f;
-	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
-	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
-	del_mix = 1.0f - tRamp_tick(&adc[1]);
-	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 3)) + 1);
-	del_lenY = LED_States[0] == 1 ? del_lenX : (int)(pow(8, (9 * tRamp_tick(&adc[5]) - 3)) + 1);
-//	del_len = tRamp_tick(&adc[2]) * SAMPLE_RATE * 3;
-	del_fb = tRamp_tick(&adc[3]);
-
-	a0 = del_mix + (1 - del_mix) * filter_c;
-	a1 = 1 - del_mix;
-	b1 = filter_c  * (1 - del_mix) * del_fb;
-
-	tTapeDelay_setDelay(&delT[0], del_lenX);
-	tTapeDelay_setDelay(&delT[1], del_lenY-1);
-
-	x1L = tTapeDelay_tick(&delT[0], audioIn);
-	sampleL = a0 * audioIn + a1 * x1L - b1 * y1L;
-	y1L = tTapeDelay_tick(&delT[1], sampleL);
+//	x1L = tTapeDelay_tick(&delT[0], audioIn);
+//	sampleL = a0 * audioIn + a1 * x1L - b1 * y1L;
+//	y1L = tTapeDelay_tick(&delT[1], sampleL);
 
 	/*>-<*/
 
 	/* multi delay */
+//	num_delX = (int) (ADC_values[0] * INV_TWO_TO_16 * 8) + 1;
 //	if (num_delX != delE->numPoint)
 //	{
 //		tDelayExt_setNumPoint(&delE, num_delX);
 //	}
 //
-//	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 3)) + 1);
+//	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 1)) + 1);
 //	uint32_t delaysX[num_delX];
 //	for(int i = 0; i < num_delX; i++) delaysX[i] = (uint32_t)(i+1) * del_lenX;
 //	tDelayExt_setDelay(&delE, &delaysX[0]);
@@ -393,8 +335,25 @@ float audioTickL(float audioIn)
 //	tDelayExt_tick(&delE, audioIn);
 //	sampleL = 0.0f;
 //	for(int i = 0; i < num_delX; i++) sampleL += delE->lastOuts[i] / num_delX;
-//
-//	return sampleL;
+
+	/* multi tape delay */
+	num_delX = (int) (ADC_values[0] * INV_TWO_TO_16 * 8) + 1;
+	if (num_delX != delTE->numPoint)
+	{
+		tTapeDelayExt_setNumPoint(&delTE, num_delX);
+	}
+
+	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 1)) + 1);
+	uint32_t delaysX[num_delX];
+	for(int i = 0; i < num_delX; i++) delaysX[i] = (uint32_t)(i+1) * del_lenX;
+	tTapeDelayExt_setDelay(&delTE, &delaysX[0]);
+
+	tTapeDelayExt_tick(&delTE, audioIn);
+	sampleL = 0.0f;
+	for(int i = 0; i < num_delX; i++) sampleL += delTE->lastOuts[i] / num_delX;
+	/*>-<*/
+
+	return sampleL;
 }
 
 
@@ -428,6 +387,52 @@ float audioTickR(float audioIn)
 	sampleR = 0.0f;
 	return sampleR;
 }
+
+/* methods in audioTick for simple filters */
+void moog_filter(float audioIn, float* sample){
+	float sam = 0.0f;
+
+	filter_fc = tRamp_tick(&adc[0]) * 4950.0f + 50.0f;
+	filter_res = tRamp_tick(&adc[1]);
+	filter_4p_para1 = tRamp_tick(&adc[3]) * 20.0f;
+	filter_4p_para2 = tRamp_tick(&adc[4]) * 15.0f;
+	filter_4p_para3 = tRamp_tick(&adc[5]) * 5.0f;
+
+	filter_k = 7.2f * filter_fc * INV_SAMPLE_RATE - 6.4f * filter_fc * filter_fc * INV_SAMPLE_RATE * INV_SAMPLE_RATE - 1.0f;
+//	filter_k = filter_4p_para1 * filter_fc / SAMPLE_RATE - filter_4p_para2 * filter_fc * filter_fc / SAMPLE_RATE / SAMPLE_RATE - 1.0f;
+	filter_p = (filter_k + 1.0f) * 0.5f;
+	filter_r = filter_res * exp((1.0f - filter_p) * 1.386249);
+//	filter_r = filter_res * exp((1.0f - filter_p) * filter_4p_para3);
+
+	sam = audioIn - filter_r * y4L;
+	y1L = sam * filter_p + x1L * filter_p - filter_k * y1L;
+	y2L = y1L * filter_p + y1lastL * filter_p - filter_k * y2L;
+	y3L = y2L * filter_p + y2lastL * filter_p - filter_k * y3L;
+	y4L = y3L * filter_p + y3lastL * filter_p - filter_k * y4L;
+	y4L = y4L - y4L * y4L * y4L / 6;
+
+	x1L = sam;
+	y1lastL = y1L;
+	y2lastL = y2L;
+	y3lastL = y3L;
+	*sample = y4L;
+}
+
+void first_allpass_filter(float audioIn, float* sample){
+	filter_fc = tRamp_tick(&adc[0]) * 1550.0f + 50.0f;
+	filter_k = tan(PI * filter_fc * INV_SAMPLE_RATE);
+	filter_c = (filter_k - 1.0f) / (filter_k + 1.0f);
+
+	y1L = filter_c * audioIn + x1L - filter_c * y1L;
+	*sample = y1L + audioIn;
+	x1L = audioIn;
+}
+
+void delter_tape(float audioIn, float* sample){
+
+}
+/*>-<*/
+
 
 void buttonCheck(void)
 {

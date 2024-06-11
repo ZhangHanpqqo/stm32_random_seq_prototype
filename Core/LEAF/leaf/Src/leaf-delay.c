@@ -1140,7 +1140,7 @@ Lfloat tTapeDelay_tapOut (tTapeDelay* const dl, Lfloat tapDelay)
 
     Lfloat alpha = tap - idx;
 
-    Lfloat samp =    LEAF_interpolate_hermite_x (d->buff[((idx - 1) + d->maxDelay) % d->maxDelay],
+    Lfloat samp =   _LEAF_interpolate_hermite_x (d->buff[((idx - 1) + d->maxDelay) % d->maxDelay],
                                               d->buff[idx],
                                               d->buff[(idx + 1) % d->maxDelay],
                                               d->buff[(idx + 2) % d->maxDelay],
