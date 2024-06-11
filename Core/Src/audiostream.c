@@ -351,8 +351,11 @@ float audioTickL(float audioIn)
 	}
 
 	// decide the delay pattern
-
-	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[1]) - 1)) * 4 + num_delX); // the whole length of the delay line
+	if(abs(ADC_values[1] - del_len_old) > 200){
+		del_lenX = (int)(pow(8, (9 * (ADC_values[1] * INV_TWO_TO_16) - 1)) * 4 + num_delX);
+//		del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[1]) - 1)) * 4 + num_delX); // the whole length of the delay line
+		del_len_old = ADC_values[1];
+	}
 
 	if (flag == 1 || abs(ADC_values[3] - wc) > 200 || abs(ADC_values[4] - hc) > 200){
 		wc = ADC_values[3];
