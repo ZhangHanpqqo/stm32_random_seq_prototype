@@ -264,6 +264,11 @@ int num_delX = 4, num_delY = 4;
 //int* delaysX, delaysY;
 float a0 = 0.0f, a1 = 0.0f, a2 = 0.0f, b1 = 0.0f, b2 = 0.0f;
 
+uint16_t wc = 0, hc = 0; // multitap delay uneven peak, width center, height center
+uint16_t del_len_old = 0;
+uint32_t delaysX[8];
+float delaysXdis[8], delaysXamp[8];
+
 float audioTickL(float audioIn)
 {
 
@@ -327,7 +332,7 @@ float audioTickL(float audioIn)
 //		tDelayExt_setNumPoint(&delE, num_delX);
 //	}
 //
-//	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 1)) + 1);
+//	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[1]) - 1)) + 1);
 //	uint32_t delaysX[num_delX];
 //	for(int i = 0; i < num_delX; i++) delaysX[i] = (uint32_t)(i+1) * del_lenX;
 //	tDelayExt_setDelay(&delE, &delaysX[0]);
@@ -337,20 +342,54 @@ float audioTickL(float audioIn)
 //	for(int i = 0; i < num_delX; i++) sampleL += delE->lastOuts[i] / num_delX;
 
 	/* multi tape delay */
+	int flag = 0;
 	num_delX = (int) (ADC_values[0] * INV_TWO_TO_16 * 8) + 1;
 	if (num_delX != delTE->numPoint)
 	{
 		tTapeDelayExt_setNumPoint(&delTE, num_delX);
+		flag = 1;
 	}
 
-	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[2]) - 1)) + 1);
-	uint32_t delaysX[num_delX];
-	for(int i = 0; i < num_delX; i++) delaysX[i] = (uint32_t)(i+1) * del_lenX;
-	tTapeDelayExt_setDelay(&delTE, &delaysX[0]);
+	// decide the delay pattern
 
+	del_lenX = (int)(pow(8, (9 * tRamp_tick(&adc[1]) - 1)) * 4 + num_delX); // the whole length of the delay line
+
+	if (flag == 1 || abs(ADC_values[3] - wc) > 200 || abs(ADC_values[4] - hc) > 200){
+		wc = ADC_values[3];
+		hc = ADC_values[4];
+		float wcf = wc * INV_TWO_TO_16 * 2;
+		float hcf = hc * INV_TWO_TO_16 * 2;
+		float area = hcf > 1.0f ? hcf + wcf / 2.0f : 1 + hcf;
+		area /= num_delX + 1;
+		float inc1 = (hcf - 1) / wcf * 0.0004; // increment for the first segment, 100 division
+		float inc2 = hcf > 1.0f ? hcf / (wcf - 2) * 0.0004 : (1 - hcf) / (2 - wcf) * 0.0004;
+
+		float area_accum = 0.0f, area_cur_frame = 0.02f-inc1/2.0f, cur_frame = 0.0f;
+		for (int i = 0; i < num_delX; i++){
+			while(area_accum < area && cur_frame < 1.99f){
+				area_cur_frame += cur_frame <= wcf ? inc1 : inc2;
+				area_accum += area_cur_frame;
+				cur_frame += 0.02;
+			}
+
+			delaysXdis[i] = cur_frame;
+			delaysXamp[i] = area_cur_frame / 0.02;
+			area_accum = 0.0f;
+		}
+	}
+
+//
+	for(int i = 0; i < num_delX; i++)
+	{
+//		delaysX[i] = (uint32_t)(i+1) * del_lenX;
+		int j = (int)(delaysXdis[i] / 2.0f * (float)del_lenX) + 1;
+		if (abs(delaysX[i] - j) > 80) delaysX[i] = j;
+	}
+
+	tTapeDelayExt_setDelay(&delTE, &delaysX[0]);
 	tTapeDelayExt_tick(&delTE, audioIn);
 	sampleL = 0.0f;
-	for(int i = 0; i < num_delX; i++) sampleL += delTE->lastOuts[i] / num_delX;
+	for(int i = 0; i < num_delX; i++) sampleL += delTE->lastOuts[i] / num_delX * delaysXamp[i];
 	/*>-<*/
 
 	return sampleL;
